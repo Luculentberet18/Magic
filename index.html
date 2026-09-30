@@ -43,7 +43,6 @@ p{font-size:.92rem;line-height:1.65;color:var(--muted);margin:10px 0}
 #no{transition:transform .2s}
 .big{font-size:3.4rem;animation:beat 1.2s infinite}
 @keyframes beat{50%{transform:scale(1.15)}}
-.mute{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:12px;z-index:5;background:rgba(13,26,61,.8);border:1px solid rgba(120,150,255,.3);color:var(--text);border-radius:999px;padding:7px 12px;font-size:.8rem;cursor:pointer}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -91,26 +90,22 @@ p{font-size:.92rem;line-height:1.65;color:var(--muted);margin:10px 0}
   <div class="pad" id="pad"></div>
 </div></section>
 
-<!-- 6 · THE QUESTION -->
+<!-- 6 · THANK YOU -->
 <section class="scene" id="s6"><div class="panel">
   <div class="big">💗</div>
-  <h1>Gusto kita, <span class="her">[PANGALAN NIYA]</span>.</h1>
-  <p>Hindi ko kailangan ng sagot ngayon. Gusto ko lang na malaman mo. Pwede ba kitang ligawan?</p>
-  <div class="ans">
-    <button class="btn" id="yes" onclick="yes()">Oo 💖</button>
-    <button class="btn" id="no" style="background:#2a3766" onclick="dodge()" onmouseover="dodge()" ontouchstart="dodge(event)">Hindi pa</button>
-  </div>
+  <h1>Salamat sa pagbabasa, <span class="her">[PANGALAN NIYA]</span>.</h1>
+  <p>Yun lang ang gusto kong sabihin. Salamat sa oras mo.</p>
+  <button class="btn" onclick="go(7);burst()">Tapos na 💖</button>
 </div></section>
 
 <!-- 7 · END -->
 <section class="scene" id="s7"><div class="panel">
   <div class="big">🥹</div>
-  <h1>Salamat, <span class="her">[PANGALAN NIYA]</span>!</h1>
-  <p>Kinikilig ako ngayon. I-screenshot mo 'to at i-send mo sa'kin ha. 💙</p>
+  <h1>Hanggang dito na lang.</h1>
+  <p>Salamat ulit. 💙</p>
   <p style="color:var(--text)">— <span class="me">[PANGALAN MO]</span></p>
 </div></section>
 
-<button class="mute" id="mute" onclick="toggleMusic()">🔇 Music</button>
 <audio id="bgm" loop src="palayo-sa-mundo.mp3"></audio><!-- ilagay ang audio file sa parehong folder na may ganitong pangalan -->
 
 <script>
@@ -152,16 +147,18 @@ CONFIG.photos.forEach(p=>{
 });
 
 // letter (nasa /api/letter; ?write para mag-edit)
+const API=['/api/letter','/.netlify/functions/letter'];
+async function api(opts){let last;for(const u of API){try{const r=await fetch(u,opts);if(r.status!==404){r.via=u;return r}last=r;last.via=u}catch(e){}}return last}
 const WRITE=location.search.includes('write');
 const fill=(cls,v)=>{if(v)document.querySelectorAll('.'+cls).forEach(el=>el.textContent=v)};
 const box='border-radius:10px;border:1px solid #ff7eb3;background:#0b1033;color:#fff;padding:10px;width:100%;margin-top:8px;font:1rem Montserrat,sans-serif';
-fetch('/.netlify/functions/letter',{cache:'no-store'}).then(r=>r.ok?r.json():{}).catch(()=>({})).then(d=>{
+api({cache:'no-store'}).then(r=>r&&r.ok?r.json():{}).catch(()=>({})).then(d=>{
   d=d||{};const t=d.letter||'';
   fill('her',d.her);fill('me',d.me);
   if(WRITE){
     $('letter').innerHTML=`<input id="nh" placeholder="Pangalan niya" style="${box}"><input id="nm" placeholder="Pangalan mo" style="${box}"><textarea id="ta" style="${box};height:34vh" placeholder="Isulat dito ang sulat. Blangkong linya = bagong paragraph."></textarea><input id="pw" type="password" placeholder="Passcode" style="${box}"><button class="btn" id="sv">Save 💾</button> <span id="st" style="font-size:.8rem;color:#ffd6ea"></span>`;
     $('nh').value=d.her||'';$('nm').value=d.me||'';$('ta').value=t;
-    $('sv').onclick=()=>{fetch('/.netlify/functions/letter',{method:'POST',body:JSON.stringify({pass:$('pw').value.trim(),her:$('nh').value.trim(),me:$('nm').value.trim(),letter:$('ta').value})}).then(async r=>{const m=await r.json().catch(()=>({}));$('st').textContent=r.ok?'Na-save na ✅':'Error '+r.status+': '+(m.error||'')}).catch(e=>$('st').textContent='Error: '+e.message)};
+    $('sv').onclick=()=>{api({method:'POST',body:JSON.stringify({pass:$('pw').value.trim(),her:$('nh').value.trim(),me:$('nm').value.trim(),letter:$('ta').value})}).then(async r=>{const m=await r.json().catch(()=>({}));$('st').textContent=r.ok?'Na-save na ✅':'Error '+r.status+' ('+r.via+'): '+(m.error||'wala ang function sa address na ito')}).catch(e=>$('st').textContent='Error: '+e.message)};
     go(4);return;
   }
   const parts=t.trim().split(/\n\s*\n/).filter(Boolean);
@@ -187,22 +184,9 @@ function press(k){
   paint();
 }
 
-// the question
-let dodges=0;
-function dodge(e){
-  if(e)e.preventDefault();
-  const b=$('no');dodges++;
-  b.style.transform=`translate(${(Math.random()-.5)*150}px,${(Math.random()-.5)*90}px)`;
-  if(dodges>4)b.textContent='Sige na 🥺';
-}
-function yes(){go(7);burst()}
 
 // music
-function startMusic(){const a=$('bgm');a.play().then(()=>$('mute').textContent='🔊 Music').catch(()=>{})}
-function toggleMusic(){
-  const a=$('bgm');
-  if(a.paused){a.play();$('mute').textContent='🔊 Music'}else{a.pause();$('mute').textContent='🔇 Music'}
-}
+function startMusic(){const a=$('bgm');a.play().catch(()=>{})}
 
 // starfield + hearts
 const cv=$('c'),x=cv.getContext('2d');let W,H,stars=[],hearts=[];
