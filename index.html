@@ -155,13 +155,13 @@ CONFIG.photos.forEach(p=>{
 const WRITE=location.search.includes('write');
 const fill=(cls,v)=>{if(v)document.querySelectorAll('.'+cls).forEach(el=>el.textContent=v)};
 const box='border-radius:10px;border:1px solid #ff7eb3;background:#0b1033;color:#fff;padding:10px;width:100%;margin-top:8px;font:1rem Montserrat,sans-serif';
-fetch('/api/letter',{cache:'no-store'}).then(r=>r.ok?r.json():{}).catch(()=>({})).then(d=>{
+fetch('/.netlify/functions/letter',{cache:'no-store'}).then(r=>r.ok?r.json():{}).catch(()=>({})).then(d=>{
   d=d||{};const t=d.letter||'';
   fill('her',d.her);fill('me',d.me);
   if(WRITE){
     $('letter').innerHTML=`<input id="nh" placeholder="Pangalan niya" style="${box}"><input id="nm" placeholder="Pangalan mo" style="${box}"><textarea id="ta" style="${box};height:34vh" placeholder="Isulat dito ang sulat. Blangkong linya = bagong paragraph."></textarea><input id="pw" type="password" placeholder="Passcode" style="${box}"><button class="btn" id="sv">Save 💾</button> <span id="st" style="font-size:.8rem;color:#ffd6ea"></span>`;
     $('nh').value=d.her||'';$('nm').value=d.me||'';$('ta').value=t;
-    $('sv').onclick=()=>{fetch('/api/letter',{method:'POST',body:JSON.stringify({pass:$('pw').value.trim(),her:$('nh').value.trim(),me:$('nm').value.trim(),letter:$('ta').value})}).then(async r=>{const m=await r.json().catch(()=>({}));$('st').textContent=r.ok?'Na-save na ✅':'Error '+r.status+': '+(m.error||'')}).catch(e=>$('st').textContent='Error: '+e.message)};
+    $('sv').onclick=()=>{fetch('/.netlify/functions/letter',{method:'POST',body:JSON.stringify({pass:$('pw').value.trim(),her:$('nh').value.trim(),me:$('nm').value.trim(),letter:$('ta').value})}).then(async r=>{const m=await r.json().catch(()=>({}));$('st').textContent=r.ok?'Na-save na ✅':'Error '+r.status+': '+(m.error||'')}).catch(e=>$('st').textContent='Error: '+e.message)};
     go(4);return;
   }
   const parts=t.trim().split(/\n\s*\n/).filter(Boolean);
